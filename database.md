@@ -1,0 +1,41 @@
+# DATABASE STRUCTURE
+
+- users
+  - user-id (randomised)
+  - email
+  - first-name
+  - last-name
+  - password
+- calender
+  - events
+    - event-id (randomised)
+    - title
+    - start-date
+    - end-date
+    - start-time
+    - end-time
+    - notes
+    - repetitions (daily, weekly, monthly, custom) *
+    - company-id
+    - type: application, interview, online assessment
+- analytics
+  - applied: []
+    - company-id
+    - role
+    - date-applied
+  - rejected: []
+    - company-id
+    - date-rejected
+  - behavioural-ints: []
+    - company-id
+    - date-int-obtained
+  - technical-ints: []
+    - company-id
+    - date-int-obtained
+  - online-assessments: []
+    - company-id
+    - date-oa-obtained
+  - companies: []
+    - id
+    - name
+    - type: tech, another type
