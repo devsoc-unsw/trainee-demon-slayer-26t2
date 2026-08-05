@@ -6,6 +6,8 @@ import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import path from 'path'
 import { fileURLToPath } from 'url';
+import authRouter from './routes/auth.routes.js';
+
 // const path = require('path');
 
 const app = express();
@@ -17,6 +19,7 @@ const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 // Middleware to parse JSON request bodies
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.json());
+app.use('/auth', authRouter);
 
 // // A basic route
 // app.get('/', (req, res) => {
@@ -30,4 +33,8 @@ app.use(express.json());
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({ error: err.message });
 });
