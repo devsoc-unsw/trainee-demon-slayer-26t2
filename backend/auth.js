@@ -43,3 +43,48 @@ export async function signup(req, res, next) {
     return next(err);
   }
 }
+
+export async function login(req, res, next) {
+  const { email, password } = req.body
+
+  if (!email || !password) {
+    return res.status(400).json({
+      error: 'email and password are required'
+    });
+  }
+
+  try {
+    const snapshot = 
+      await db.collection('users').where('emmail', '==', email).limit(1).get();
+    if (snapshot.empty) {
+      return res.status(401).json({
+        error: 'invalid email or password'
+      });
+    }
+
+    const userDoc = snapshot.docs[0];
+    const user = userDoc.data();
+
+    const passwordMatches = await bcrypt.compare(password, user.password);
+    if (!passwordMatches) {
+      return res.status(401).json({
+        error: 'invalid email or password'
+      });
+    }
+
+    const token = jwt.sign({ uid: userDoc.id, email }, JWT_SECRET, { algorithm: 'HS256' });
+    
+    return res.status(200).json({
+      token,
+      user: {
+        id: userDoc.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
