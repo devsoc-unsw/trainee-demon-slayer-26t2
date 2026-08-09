@@ -88,3 +88,33 @@ export async function login(req, res, next) {
     return next(err);
   }
 }
+
+export async function logout(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'missing or invalid authorization header'
+    });
+  }
+  const token = authHeader.slice('Bearer '.length);
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({
+      error: 'invalid or expired token'
+    });
+  }
+
+  try {
+    await db.collection('revokedTokens').doc(token).set({
+      uid: decoded.uid,
+      revokedAt: new Date().toISOString(),
+      expiresAt: new Date(decoded.exp * 1000).toISOString(),
+    });
+    return res.status(200).json({ message: 'logged out' });
+  } catch (err) {
+    return next(err);
+  }
+}
