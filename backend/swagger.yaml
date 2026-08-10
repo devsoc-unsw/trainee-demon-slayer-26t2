@@ -25,11 +25,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password, name]
+              required: [email, password, firstName, lastName]
               properties:
                 email: { type: string, format: email }
                 password: { type: string, format: password }
-                name: { type: string }
+                firstName: { type: string }
+                lastName: { type: string }
       responses:
         '201':
           description: User created
@@ -57,6 +58,7 @@ components:
       type: object
       properties:
         id: { type: string }
-        name: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
         email: { type: string, format: email }
         createdAt: { type: string, format: date-time }
