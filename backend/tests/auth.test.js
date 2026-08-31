@@ -20,6 +20,7 @@ const { collectionMocks, getCollectionMock, mockCollection } = vi.hoisted(() => 
       obj.get = vi.fn();
       obj.doc = vi.fn(() => obj);
       obj.set = vi.fn();
+      obj.update = vi.fn();
       obj.delete = vi.fn();
       collectionMocks[name] = obj;
     }
@@ -50,7 +51,7 @@ vi.mock('jsonwebtoken', () => ({
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { signup, login, logout, deleteAccount } from '../auth.js';
+import { signup, login, logout, deleteAccount, changePassword } from '../auth.js';
 
 function mockRes() {
   const res = {};
@@ -66,6 +67,7 @@ beforeEach(() => {
   for (const name of Object.keys(collectionMocks)) {
     collectionMocks[name].get.mockResolvedValue({ empty: true, docs: [] });
     collectionMocks[name].set.mockResolvedValue(undefined);
+    collectionMocks[name].update.mockResolvedValue(undefined);
     collectionMocks[name].delete.mockResolvedValue(undefined);
   }
 });
@@ -456,6 +458,162 @@ describe('deleteAccount', () => {
     const next = vi.fn();
 
     await deleteAccount(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(dbError);
+  });
+});
+
+describe('changePassword', () => {
+  const storedUser = {
+    email: 'ann@example.com',
+    firstName: 'Ann',
+    lastName: 'Lee',
+    password: 'hashed-old-pw',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  function authedReq(overrides = {}) {
+    return {
+      headers: { authorization: 'Bearer good-token' },
+      body: { currentPassword: 'oldpassword1', newPassword: 'newpassword1' },
+      ...overrides,
+    };
+  }
+
+  it('401s when the authorization header is missing or malformed', async () => {
+    const req = { headers: {}, body: { currentPassword: 'a', newPassword: 'b' } };
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it('401s when the token fails verification', async () => {
+    jwt.verify.mockImplementationOnce(() => {
+      throw new Error('jwt expired');
+    });
+
+    const req = authedReq();
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'invalid or expired token' });
+  });
+
+  it('400s when currentPassword or newPassword is missing', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+
+    const req = authedReq({ body: { currentPassword: 'oldpassword1' } });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('400s when newPassword is shorter than 6 characters', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+
+    const req = authedReq({ body: { currentPassword: 'oldpassword1', newPassword: 'abc' } });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'newPassword must be at least 6 characters :(',
+    });
+  });
+
+  it('400s when newPassword is the same as currentPassword', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+
+    const req = authedReq({
+      body: { currentPassword: 'samepassword', newPassword: 'samepassword' },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'newPassword must be different from currentPassword',
+    });
+  });
+
+  it('404s when the user no longer exists', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+    const users = getCollectionMock('users');
+    users.get.mockResolvedValueOnce({ exists: false });
+
+    const req = authedReq();
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('401s when currentPassword does not match', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+    const users = getCollectionMock('users');
+    users.get.mockResolvedValueOnce({ exists: true, data: () => storedUser });
+    bcrypt.compare.mockResolvedValueOnce(false);
+
+    const req = authedReq();
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'invalid password' });
+  });
+
+  it('hashes and saves the new password, revokes the token, and returns 200 on success', async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1', exp: futureExp });
+    const users = getCollectionMock('users');
+    users.get.mockResolvedValueOnce({ exists: true, data: () => storedUser });
+    bcrypt.compare.mockResolvedValueOnce(true);
+    bcrypt.hash.mockResolvedValueOnce('hashed-new-pw');
+    const revoked = getCollectionMock('revokedTokens');
+
+    const req = authedReq();
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
+
+    expect(bcrypt.hash).toHaveBeenCalledWith('newpassword1', 10);
+    expect(users.update).toHaveBeenCalledWith({ password: 'hashed-new-pw' });
+    expect(revoked.set).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: 'uid1', revokedAt: expect.any(String) })
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: 'password updated' });
+  });
+
+  it('forwards unexpected errors to next()', async () => {
+    jwt.verify.mockReturnValueOnce({ uid: 'uid1' });
+    const users = getCollectionMock('users');
+    const dbError = new Error('firestore is down');
+    users.get.mockRejectedValueOnce(dbError);
+
+    const req = authedReq();
+    const res = mockRes();
+    const next = vi.fn();
+
+    await changePassword(req, res, next);
 
     expect(next).toHaveBeenCalledWith(dbError);
   });

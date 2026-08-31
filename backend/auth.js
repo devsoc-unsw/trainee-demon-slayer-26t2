@@ -165,3 +165,58 @@ export async function deleteAccount(req, res, next) {
     return next(err);
   }
 }
+
+export async function changePassword(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'missing or invalid authorization header' });
+  }
+  const token = authHeader.slice('Bearer '.length);
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'invalid or expired token' });
+  }
+
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'newPassword must be at least 6 characters :(' });
+  }
+  if (newPassword === currentPassword) {
+    return res.status(400).json({ error: 'newPassword must be different from currentPassword' });
+  }
+
+  try {
+    const userRef = db.collection('users').doc(decoded.uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'user not found' });
+    }
+
+    const user = userDoc.data();
+    const passwordMatches = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatches) {
+      return res.status(401).json({ error: 'invalid password' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await userRef.update({ password: hashedPassword });
+
+    // the old token was issued under the old password; revoke it so it can't
+    // keep being used, the same way logout does
+    await db.collection('revokedTokens').doc(token).set({
+      uid: decoded.uid,
+      revokedAt: new Date().toISOString(),
+      expiresAt: new Date(decoded.exp * 1000).toISOString(),
+    });
+
+    return res.status(200).json({ message: 'password updated' });
+  } catch (err) {
+    return next(err);
+  }
+}
