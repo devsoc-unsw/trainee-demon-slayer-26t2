@@ -31,10 +31,10 @@ app.use('/auth', authRouter);
 //   res.json([{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]);
 // });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
