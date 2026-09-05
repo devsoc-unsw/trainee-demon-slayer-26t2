@@ -6,7 +6,9 @@ import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import path from 'path'
 import { fileURLToPath } from 'url';
-import authRouter from './routes/auth.routes.js';
+// import authRouter from './routes/auth.routes.js';
+import { changePassword, deleteAccount, login, logout, signup } from './auth.js';
+import { createEvent, deleteEvent, editEvent, getEvents } from './calendar.js';
 
 // const path = require('path');
 
@@ -19,17 +21,24 @@ const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 // Middleware to parse JSON request bodies
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.json());
-app.use('/auth', authRouter);
+// app.use('/auth', authRouter);
 
-// // A basic route
-// app.get('/', (req, res) => {
-//   res.send('Hello, world!');
-// });
+// AUTH ROUTES /////////////////////////////////////////////////////////////////
+app.post('/user/auth/signup', signup);
+app.post('/user/auth/login', login);
+app.post('/user/auth/logout', logout);
+app.delete('/user/auth/account', deleteAccount);
+app.patch('/user/auth/change-password', changePassword);
 
-// // Example API route
-// app.get('/api/users', (req, res) => {
-//   res.json([{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]);
-// });
+// CALENDAR ////////////////////////////////////////////////////////////////////
+app.get('/calendar/events', getEvents);
+app.post('/calendar/create-event', createEvent);
+app.delete('/calendar/delete-event/:id', deleteEvent);
+app.patch('/calendar/edit-event/:id', editEvent);
+
+
+// ANALYTICS ///////////////////////////////////////////////////////////////////
+
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message });

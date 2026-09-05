@@ -37,7 +37,13 @@ export async function signup(req, res, next) {
 
     return res.status(201).json({
       token,
-      user: { id: userRef.id, firstName, lastName, email, createdAt },
+      user: { 
+        id: userRef.id, 
+        firstName: firstName,
+        lastName: lastName, 
+        email: email, 
+        createdAt: createdAt
+      },
     });
   } catch (err) {
     return next(err);
@@ -102,7 +108,7 @@ export async function logout(req, res, next) {
   try {
     decoded = jwt.verify(token, JWT_SECRET);
   } catch (err) {
-    return res.status(401).json({
+    return res.status(400).json({
       error: 'invalid or expired token'
     });
   }
