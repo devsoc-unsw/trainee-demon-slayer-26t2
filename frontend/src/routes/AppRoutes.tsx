@@ -3,7 +3,7 @@ import { AppLayout } from "../layouts/AppLayout";
 import { AnalyticsPage } from "../pages/AnalyticsPage";
 import { CalendarPage } from "../pages/CalendarPage";
 import { DashboardPage } from "../pages/DashboardPage";
-import { LoginPage } from "../pages/LoginPage";
+import LoginPage  from "../pages/LoginPage";
 import { ProfilePage } from "../pages/ProfilePage";
 
 export function AppRoutes() {

@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { Button } from "../components/Button/Button";
 import "./AppLayout.css";
 
 export function AppLayout() {
@@ -11,6 +12,10 @@ export function AppLayout() {
           <NavLink to="/" end>
             Dashboard
           </NavLink>
+
+          <Button type="submit">
+            Login
+          </Button>
 
           <NavLink to="/calendar">
             Calendar
