@@ -1,32 +1,64 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/Button/Button";
+import { signup } from "../api/auth";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+    console.log("REGISTER SUBMITTED");
+
+    setError("");
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
 
-    console.log("Register submitted:", {
-      name,
-      email,
-      password,
-    });
+    setLoading(true);
 
-    // Temporary: after registering, go to login
-    navigate("/login");
+    try {
+      console.log("Calling signup API...");
+
+      const data = await signup(
+        firstName,
+        lastName,
+        email,
+        password
+      );
+
+      console.log("Signup response:", data);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      console.log("Navigating to dashboard...");
+
+      navigate("/");
+    } catch (err) {
+      console.error("Signup error:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to create your account. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,23 +116,43 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Name */}
+              {/* First Name */}
               <div>
                 <label
-                  htmlFor="name"
+                  htmlFor="firstName"
                   className="mb-2 block text-sm font-bold text-[#29233A]"
                 >
-                  Name
+                  First name
                 </label>
 
                 <input
-                  id="name"
+                  id="firstName"
                   type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Enter your name"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  placeholder="Enter your first name"
                   required
-                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#D0BCFF] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
+                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="mb-2 block text-sm font-bold text-[#29233A]"
+                >
+                  Last name
+                </label>
+
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  placeholder="Enter your last name"
+                  required
+                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
                 />
               </div>
 
@@ -120,7 +172,7 @@ export default function RegisterPage() {
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#D0BCFF] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
+                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
                 />
               </div>
 
@@ -140,11 +192,12 @@ export default function RegisterPage() {
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Create a password"
                   required
-                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#D0BCFF] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
+                  minLength={6}
+                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
                 />
               </div>
 
-              {/* Confirm password */}
+              {/* Confirm Password */}
               <div>
                 <label
                   htmlFor="confirmPassword"
@@ -157,16 +210,27 @@ export default function RegisterPage() {
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(event) =>
+                    setConfirmPassword(event.target.value)
+                  }
                   placeholder="Confirm your password"
                   required
-                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#D0BCFF] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
+                  minLength={6}
+                  className="w-full rounded-xl border-2 border-[#B39AE8] bg-[#F5F0FF] px-4 py-3 font-medium text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-4 focus:ring-[#7652B8]/15"
                 />
               </div>
 
+              {/* Error */}
+              {error && (
+                <p className="text-center text-sm font-semibold text-[#D9536F]">
+                  {error}
+                </p>
+              )}
+
+              {/* Create Account */}
               <div className="pt-2">
-                <Button type="submit">
-                  Create account
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Creating account..." : "Create account"}
                 </Button>
               </div>
 

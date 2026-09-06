@@ -1,29 +1,55 @@
 import { useState } from "react";
 import { Button } from "../components/Button/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../api/auth";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+const handleSubmit = async (
+  event: React.FormEvent<HTMLFormElement>
+) => {
+  event.preventDefault();
 
-    console.log("Login submitted:", {
-      email,
-      password,
-    });
-  };
+  setError("");
+  setLoading(true);
+
+  try {
+    const data = await login(email, password);
+
+    console.log("Login successful:", data);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    navigate("/");
+  } catch (err) {
+    console.error("Login error:", err);
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Unable to log in. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <main className="min-h-screen bg-[#17182F] px-6 py-12">
+    <main className="relative min-h-screen overflow-hidden bg-[#17182F] px-6 py-12">
 
-    {/* Background decoration */}
-    <div className="pointer-events-none absolute -left-32 -top-32 h-120 w-120 rounded-full bg-[#7652B8]/30 blur-3xl" />
+      {/* Background decoration */}
+      <div className="pointer-events-none absolute -left-32 -top-32 h-120 w-120 rounded-full bg-[#7652B8]/30 blur-3xl" />
 
-    <div className="pointer-events-none absolute -bottom-32 -right-32 h-120 w-120 rounded-full bg-[#E9A0C5]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-120 w-120 rounded-full bg-[#E9A0C5]/20 blur-3xl" />
 
-     {/* Decorative stars */}
+      {/* Decorative stars */}
       <span className="absolute left-[10%] top-[20%] text-2xl text-[#D0BCFF]">
         ✦
       </span>
@@ -40,7 +66,7 @@ export default function Login() {
         ✦
       </span>
 
-    {/* Login content */}
+      {/* Login content */}
       <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-md items-center justify-center">
         <div className="w-full rounded-2xl bg-[#D0BCFF] p-8 shadow-[6px_6px_0px_#7652B8]">
 
@@ -53,7 +79,7 @@ export default function Login() {
             <h1 className="mb-3 font-['Press_Start_2P'] text-xl leading-8 text-[#29233A]">
               Welcome back!
             </h1>
- 
+
             <p className="font-['Press_Start_2P'] text-xs text-[#5F5670]">
               Log in to continue your job hunt.
             </p>
@@ -78,7 +104,8 @@ export default function Login() {
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="Enter your email"
                 required
-                className="w-full rounded-lg border-2 border-[#B39AE8] bg-[#FDF0FF] px-4 py-3 text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-2 focus:ring-[#7652B8]/20"              />
+                className="w-full rounded-lg border-2 border-[#B39AE8] bg-[#FDF0FF] px-4 py-3 text-[#29233A] placeholder-[#8A78A8] outline-none transition focus:border-[#7652B8] focus:ring-2 focus:ring-[#7652B8]/20"
+              />
             </div>
 
             {/* Password */}
@@ -101,6 +128,13 @@ export default function Login() {
               />
             </div>
 
+            {/* Error message */}
+            {error && (
+              <p className="text-center text-sm font-semibold text-[#D9536F]">
+                {error}
+              </p>
+            )}
+
             {/* Forgot password */}
             <div className="text-right">
               <button
@@ -112,23 +146,23 @@ export default function Login() {
             </div>
 
             {/* Login */}
-            <Button type="submit">
-              Login
+            <Button type="submit" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
           {/* Register */}
           <div className="mt-6 text-center text-sm text-[#5F5670]">
             Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="font-extrabold text-[#51358B] hover:underline"
-              >
-                Sign up
+            <Link
+              to="/register"
+              className="font-extrabold text-[#51358B] hover:underline"
+            >
+              Sign up
             </Link>
           </div>
 
-           {/* Bottom decoration */}
+          {/* Bottom decoration */}
           <p className="mt-6 text-center text-xs font-semibold text-[#8A78A8]">
             Track it. Apply it. Get hired. ♡
           </p>

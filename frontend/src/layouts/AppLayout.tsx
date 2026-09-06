@@ -1,8 +1,25 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "../components/Button/Button";
+import { logout } from "../api/auth";
 import "./AppLayout.css";
 
 export function AppLayout() {
+
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -12,10 +29,6 @@ export function AppLayout() {
           <NavLink to="/" end>
             Dashboard
           </NavLink>
-
-          <Button type="submit">
-            Login
-          </Button>
 
           <NavLink to="/calendar">
             Calendar
@@ -28,6 +41,10 @@ export function AppLayout() {
           <NavLink to="/profile">
             Profile
           </NavLink>
+
+          <Button type="button" onClick={handleLogout}>
+            Logout
+          </Button>
         </nav>
       </aside>
 
