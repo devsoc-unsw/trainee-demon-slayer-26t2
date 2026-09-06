@@ -4,6 +4,7 @@ const PORT = process.env.PORT || 5050;
 
 import swaggerUi from 'swagger-ui-express';
 import authRouter from './routes/auth.routes.js';
+import applicationsRouter from './routes/applications.routes.js';
 import YAML from 'yamljs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -54,6 +55,9 @@ app.use(
 app.get('/', (req, res) => {
   res.send('Job Tracker backend is running!');
 });
+
+// APPLICATIONS /////////////////////////////////////////////////////////////////
+app.use('/applications', applicationsRouter);
 
 // AUTH ROUTES /////////////////////////////////////////////////////////////////
 app.use('/auth', authRouter);
