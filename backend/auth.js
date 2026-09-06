@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { db } from '../firebase.js';
+import { db } from './firebase.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -33,7 +33,14 @@ export async function signup(req, res, next) {
       createdAt,
     });
 
-    const token = jwt.sign({ uid: userRef.id, email }, JWT_SECRET, { algorithm: 'HS256' });
+    const token = jwt.sign(
+      { uid: userRef.id, email },
+      JWT_SECRET,
+      {
+        algorithm: 'HS256',
+        expiresIn: '1h',
+      }
+    );
 
     return res.status(201).json({
       token,
@@ -78,8 +85,15 @@ export async function login(req, res, next) {
       });
     }
 
-    const token = jwt.sign({ uid: userDoc.id, email }, JWT_SECRET, { algorithm: 'HS256' });
-    
+    const token = jwt.sign(
+      { uid: userDoc.id, email },
+      JWT_SECRET,
+      {
+        algorithm: 'HS256',
+        expiresIn: '1h',
+      }
+    );
+
     return res.status(200).json({
       token,
       user: {
