@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../components/Button/Button";
+import { Button } from "../components/Button";
 import { signup } from "../api/auth";
 
 export default function RegisterPage() {

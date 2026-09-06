@@ -51,6 +51,20 @@ export function AppLayout() {
             Dashboard
           </NavLink>
 
+          <NavLink 
+            to="/applications" 
+            className={({ isActive }) => 
+            `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${ 
+              isActive
+                ? "bg-[#7652B8] text-white shadow-[4px_4px_0px_#0D0E1F]" 
+                : "text-[#B8B1C7] hover:bg-[#242342] hover:text-white" 
+                }` 
+              } 
+              > 
+              <span>▤</span> 
+              Applications 
+          </NavLink>
+
           <NavLink
             to="/calendar"
             className={({ isActive }) =>
