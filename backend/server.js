@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-const PORT = process.env.PORT || 3038;
+const PORT = process.env.PORT || 5050;
 
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';

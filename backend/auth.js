@@ -79,8 +79,15 @@ export async function login(req, res, next) {
       });
     }
 
-    const token = jwt.sign({ uid: userDoc.id, email }, JWT_SECRET, { algorithm: 'HS256' });
-    
+    const token = jwt.sign(
+      { uid: userDoc.id, email },
+      JWT_SECRET,
+      {
+        algorithm: 'HS256',
+        expiresIn: '1h',
+      }
+    );
+
     return res.status(200).json({
       token,
       user: {

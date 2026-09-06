@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3038";
+const API_URL = "http://localhost:5050";
 
 export type AuthUser = {
   id: string;
