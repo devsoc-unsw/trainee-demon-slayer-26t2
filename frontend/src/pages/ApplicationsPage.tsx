@@ -17,6 +17,7 @@ export function ApplicationsPage() {
     useState<Application | null>(null);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
 
   useEffect(() => {
     async function loadApplications() {
