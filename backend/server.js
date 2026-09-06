@@ -3,6 +3,7 @@ import cors from 'cors';
 const PORT = process.env.PORT || 5050;
 
 import swaggerUi from 'swagger-ui-express';
+import authRouter from './routes/auth.routes.js';
 import YAML from 'yamljs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -56,11 +57,6 @@ app.get('/', (req, res) => {
 
 // AUTH ROUTES /////////////////////////////////////////////////////////////////
 app.use('/auth', authRouter);
-// app.post('/auth/signup', signup);
-// app.post('/auth/login', login);
-// app.post('/auth/logout', logout);
-// app.delete('/auth/account', deleteAccount);
-// app.patch('/auth/change-password', changePassword);
 
 // CALENDAR ////////////////////////////////////////////////////////////////////
 app.get('/calendar/events', getEvents);
